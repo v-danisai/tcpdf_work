@@ -1,0 +1,71 @@
+-- MySQL Workbench Forward Engineering
+
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+
+-- -----------------------------------------------------
+-- Schema payroll_system
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Schema payroll_system
+-- -----------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS `payroll_system` DEFAULT CHARACTER SET utf8 ;
+USE `payroll_system` ;
+
+-- -----------------------------------------------------
+-- Table `payroll_system`.`boss_info`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `payroll_system`.`boss_info` (
+  `boss_id` INT NOT NULL AUTO_INCREMENT,
+  `boss_name` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`boss_id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `payroll_system`.`employee_info`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `payroll_system`.`employee_info` (
+  `employee_id` INT NOT NULL AUTO_INCREMENT,
+  `employee_name` VARCHAR(45) NOT NULL,
+  `employee_pay` DECIMAL NOT NULL,
+  `payer` INT NOT NULL,
+  PRIMARY KEY (`employee_id`),
+  INDEX `fk_employee_info_boss_info_idx` (`payer` ASC),
+  CONSTRAINT `fk_employee_info_boss_info`
+    FOREIGN KEY (`payer`)
+    REFERENCES `payroll_system`.`boss_info` (`boss_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+SET SQL_MODE=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+
+-- -----------------------------------------------------
+-- Data for table `payroll_system`.`boss_info`
+-- -----------------------------------------------------
+START TRANSACTION;
+USE `payroll_system`;
+INSERT INTO `payroll_system`.`boss_info` (`boss_id`, `boss_name`) VALUES (DEFAULT, 'Javier Pech');
+INSERT INTO `payroll_system`.`boss_info` (`boss_id`, `boss_name`) VALUES (DEFAULT, 'David Alfaro');
+
+COMMIT;
+
+
+-- -----------------------------------------------------
+-- Data for table `payroll_system`.`employee_info`
+-- -----------------------------------------------------
+START TRANSACTION;
+USE `payroll_system`;
+INSERT INTO `payroll_system`.`employee_info` (`employee_id`, `employee_name`, `employee_pay`, `payer`) VALUES (DEFAULT, 'Daniel Villanueva', 45.00, 1);
+INSERT INTO `payroll_system`.`employee_info` (`employee_id`, `employee_name`, `employee_pay`, `payer`) VALUES (DEFAULT, 'Keily Cardenas', 35.00, 2);
+INSERT INTO `payroll_system`.`employee_info` (`employee_id`, `employee_name`, `employee_pay`, `payer`) VALUES (DEFAULT, 'Stefanie Magana', 40.00, 1);
+INSERT INTO `payroll_system`.`employee_info` (`employee_id`, `employee_name`, `employee_pay`, `payer`) VALUES (DEFAULT, 'Madelyn Cunil', 45.00, 2);
+
+COMMIT;
+

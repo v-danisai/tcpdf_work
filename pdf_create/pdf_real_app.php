@@ -1,81 +1,113 @@
 <?php
 
-// Include the main TCPDF library (search for installation path).
-require_once('../vendor/tecnickcom/tcpdf/tcpdf.php');
+	// Include the main TCPDF library (search for installation path).
+	require_once('../vendor/autoload.php');
+	include "../db_conn/db_connection.php";
 
-// create new PDF document
-$pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+	$sql = "SELECT employee_info.employee_id, employee_info.employee_name, employee_info.employee_pay, boss_info.boss_name FROM employee_info 
+			INNER JOIN boss_info WHERE employee_info.payer = boss_info.boss_id";
 
-// set document information
-$pdf->SetCreator(PDF_CREATOR);
-$pdf->SetAuthor('Nicola Asuni');
-$pdf->SetTitle('TCPDF Example 001');
-$pdf->SetSubject('TCPDF Tutorial');
-$pdf->SetKeywords('TCPDF, PDF, example, test, guide');
+	$query = mysqli_query($conn, $sql);
+			
+	while($row = mysqli_fetch_assoc($query)){
+        $data[] = $row;
+    }
 
-// set default header data
-$pdf->SetHeaderData('', PDF_HEADER_LOGO_WIDTH, PDF_HEADER_TITLE.' 001', PDF_HEADER_STRING, array(0,64,255), array(0,64,128));
-$pdf->setFooterData(array(0,64,0), array(0,64,128));
+	// extend TCPF with custom functions
+	class MYPDF extends TCPDF{
 
-// set header and footer fonts
-$pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
-$pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+		// Colored table
+		public function ColoredTable($header,$data) {
+			// Colors, line width and bold font
+			$this->SetFillColor(255, 0, 0);
+			$this->SetTextColor(255);
+			$this->SetDrawColor(128, 0, 0);
+			$this->SetLineWidth(0.3);
+			$this->SetFont('', 'B');
 
-// set default monospaced font
-$pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+			// Header
+			$w = array(40, 35, 40, 45);
+			$num_headers = count($header);
+			for($i = 0; $i < $num_headers; ++$i) {
+				$this->Cell($w[$i], 7, $header[$i], 1, 0, 'C', 1);
+			}
 
-// set margins
-$pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
-$pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
-$pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+			$this->Ln();
+			// Color and font restoration
+			$this->SetFillColor(224, 235, 255);
+			$this->SetTextColor(0);
+			$this->SetFont('');
 
-// set auto page breaks
-$pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+			// Data
+			$fill = 0;
+			foreach($data as $key => $payroll_info){
+				$this->Cell($w[0], 6, $payroll_info['employee_id'], 'LR', 0, 'L', $fill);
+				$this->Cell($w[1], 6, $payroll_info['employee_name'], 'LR', 0, 'L', $fill);
+				$this->Cell($w[2], 6, $payroll_info['employee_pay'], 'LR', 0, 'R', $fill);
+				$this->Cell($w[3], 6, $payroll_info['boss_name'], 'LR', 0, 'R', $fill);
+				$this->Ln();
+				$fill=!$fill;
+			}
+			$this->Cell(array_sum($w), 0, '', 'T');
+		}
+	}
 
-// set image scale factor
-$pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+	// create new PDF document
+	$pdf = new MYPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-// set some language-dependent strings (optional)
-if (@file_exists(dirname(__FILE__).'/lang/eng.php')) {
-	require_once(dirname(__FILE__).'/lang/eng.php');
-	$pdf->setLanguageArray($l);
-}
+	// set document information
+	$pdf->SetCreator(PDF_CREATOR);
+	$pdf->SetAuthor('Daniel Villanueva');
+	$pdf->SetTitle('TCPDF');
+	$pdf->SetSubject('TCPDF Tutorial');
+	$pdf->SetKeywords('TCPDF, PDF, example, payroll_system');
 
-// ---------------------------------------------------------
+	// set default header data
+	$pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, PDF_HEADER_TITLE.' 011', PDF_HEADER_STRING);
 
-// set default font subsetting mode
-$pdf->setFontSubsetting(true);
+	// set header and footer fonts
+	$pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+	$pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
 
-// Set font
-// dejavusans is a UTF-8 Unicode font, if you only need to
-// print standard ASCII chars, you can use core fonts like
-// helvetica or times to reduce file size.
-$pdf->SetFont('dejavusans', '', 14, '', true);
+	// set default monospaced font
+	$pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
 
-// Add a page
-// This method has several options, check the source code documentation for more information.
-$pdf->AddPage();
+	// set margins
+	$pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+	$pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+	$pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
 
-// set text shadow effect
-$pdf->setTextShadow(array('enabled'=>true, 'depth_w'=>0.2, 'depth_h'=>0.2, 'color'=>array(196,196,196), 'opacity'=>1, 'blend_mode'=>'Normal'));
+	// set auto page breaks
+	$pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
 
-// Set some content to print
-$html = <<<EOD
-<h1>Hello Snoopy & Stuf</h1>
-<h2>Tengo hambre weh.</h2>
-<img src="https://www.imagenspng.com.br/wp-content/uploads/2025/05/Tralalero-Tralala-Brainrot-PNG-01.png" alt="PDF Icon" >
-<p style="color:#CC0000;">Thanks for viewing!</p>
-EOD; 
+	// set image scale factor
+	$pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
 
-// Print text using writeHTMLCell()
-$pdf->writeHTMLCell(0, 0, '', '', $html, 0, 1, 0, true, '', true);
+	// set some language-dependent strings (optional)
+	if (@file_exists(dirname(__FILE__).'/lang/eng.php')) {
+		require_once(dirname(__FILE__).'/lang/eng.php');
+		$pdf->setLanguageArray($l);
+	}
 
-// ---------------------------------------------------------
+	// ---------------------------------------------------------
 
-// Close and output PDF document
-// This method has several options, check the source code documentation for more information.
-$pdf->Output('myFirstPDF.pdf', 'I');
+	// set font
+	$pdf->SetFont('helvetica', '', 12);
 
-//============================================================+
-// END OF FILE
-//============================================================+
+	// add a page
+	$pdf->AddPage();
+
+	// column titles
+	$header = array('ID', 'Employee Name', 'Employee Pay', 'Boss Name');
+
+	// print colored table
+	$pdf->ColoredTable($header, $data);
+
+	// ---------------------------------------------------------
+
+	// close and output PDF document
+	$pdf->Output('payroll_system.pdf', 'I');
+
+	//============================================================+
+	// END OF FILE
+	//============================================================+
